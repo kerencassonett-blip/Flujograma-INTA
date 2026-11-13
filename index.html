@@ -4,1111 +4,315 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cómo obtener tabla nutricional para tu producto con INTA</title>
-    <!-- Tailwind CSS -->
-    <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts: Inter -->
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
-    <!-- Font Awesome Icons -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
-    <script>
-        tailwind.config = {
-            theme: {
-                extend: {
-                    fontFamily: {
-                        sans: ['Inter', 'sans-serif'],
-                    },
-                    colors: {
-                        inta: {
-                            navy: '#0F2942',
-                            blue: '#1E40AF',
-                            teal: '#0D9488',
-                            light: '#F0FDFA',
-                            slate: '#F8FAFC'
-                        }
-                    }
-                }
-            }
-        }
-    </script>
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background-color: #F8FAFC;
-            color: #1E293B;
-        }
-
-        .flowchart-bg {
-            background-color: #F8FAFC;
-            background-image: radial-gradient(#CBD5E1 1px, transparent 1px);
-            background-size: 24px 24px;
-        }
-
-        @keyframes flowDash {
-            to {
-                stroke-dashoffset: -20;
-            }
-        }
-        .flow-line-animated {
-            stroke-dasharray: 6, 4;
-            animation: flowDash 1.5s linear infinite;
-        }
-
-        .flow-node {
-            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-        .flow-node:hover {
-            transform: translateY(-4px);
-        }
-
-        ::-webkit-scrollbar {
-            width: 8px;
-            height: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: #F1F5F9;
-        }
-        ::-webkit-scrollbar-thumb {
-            background: #CBD5E1;
-            border-radius: 4px;
-        }
-        ::-webkit-scrollbar-thumb:hover {
-            background: #94A3B8;
-        }
+        body { font-family: 'Inter', sans-serif; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
     </style>
 </head>
-<body class="min-h-screen flex flex-col antialiased selection:bg-teal-100 selection:text-teal-900">
+<body class="bg-slate-50 text-slate-800 min-h-screen flex flex-col">
 
-    <!-- Top Institutional Header -->
-    <header class="bg-gradient-to-r from-[#0F2942] via-[#163A5F] to-[#0D5C63] text-white shadow-lg sticky top-0 z-30">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-4">
-                <div class="flex items-start sm:items-center gap-3.5">
-                    <div class="w-12 h-12 rounded-xl bg-white/10 backdrop-blur-sm border border-white/20 flex items-center justify-center shrink-0 shadow-inner">
-                        <i class="fa-solid fa-flask-vial text-teal-300 text-2xl"></i>
-                    </div>
-                    <div>
-                        <div class="flex flex-wrap items-center gap-2 mb-1">
-                            <span class="text-[11px] font-bold uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-teal-500/20 text-teal-200 border border-teal-400/30">
-                                Guía Oficial Emprendedores • INTA U. de Chile
-                            </span>
-                            <span class="text-[11px] font-medium px-2 py-0.5 rounded-full bg-white/10 text-slate-200">
-                                Orden de Servicio v2026
-                            </span>
-                        </div>
-                        <h1 class="text-xl sm:text-2xl font-extrabold tracking-tight text-white leading-tight">
-                            Cómo obtener tabla nutricional para tu producto con INTA
-                        </h1>
-                        <p class="text-xs sm:text-sm text-slate-200/90 mt-0.5">
-                            Flujograma interactivo paso a paso + Generador Smart QR de Innovación.
-                        </p>
-                    </div>
-                </div>
-
-                <!-- View Switcher & Progress -->
-                <div class="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                    <div class="bg-white/10 backdrop-blur-sm border border-white/15 rounded-xl px-3.5 py-2 flex items-center gap-3">
-                        <div class="flex-1 min-w-[110px]">
-                            <div class="flex justify-between text-xs font-medium mb-1">
-                                <span class="text-teal-200">Tu progreso</span>
-                                <span id="progress-text" class="font-bold text-white">0 / 8 pasos</span>
-                            </div>
-                            <div class="w-full h-2 bg-slate-800/60 rounded-full overflow-hidden">
-                                <div id="progress-bar" class="h-full bg-gradient-to-r from-teal-400 to-emerald-400 rounded-full transition-all duration-500" style="width: 0%"></div>
-                            </div>
-                        </div>
-                        <button onclick="resetProgress()" title="Reiniciar progreso" class="text-slate-300 hover:text-white p-1.5 rounded-lg hover:bg-white/10 transition">
-                            <i class="fa-solid fa-rotate-right text-xs"></i>
-                        </button>
-                    </div>
-
-                    <!-- Mode Toggle Buttons -->
-                    <div class="inline-flex rounded-xl bg-slate-900/40 p-1 border border-white/15 self-start sm:self-auto">
-                        <button id="btn-view-flow" onclick="switchMainView('flow')" class="flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold bg-white text-[#0F2942] shadow-sm transition">
-                            <i class="fa-solid fa-diagram-project"></i>
-                            <span>Flujograma</span>
-                        </button>
-                        <button id="btn-view-list" onclick="switchMainView('list')" class="flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-200 hover:text-white transition">
-                            <i class="fa-solid fa-list-check"></i>
-                            <span>Checklist</span>
-                        </button>
-                        <button id="btn-view-qr" onclick="switchMainView('qr')" class="flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-200 hover:text-white transition">
-                            <i class="fa-solid fa-qrcode"></i>
-                            <span>Smart QR</span>
-                        </button>
-                    </div>
-                </div>
+    <!-- Header -->
+    <header class="bg-emerald-800 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div>
+                <span class="bg-emerald-700 text-emerald-100 text-xs font-semibold px-2.5 py-1 rounded-full uppercase tracking-wider">Guía Oficial INTA 2026</span>
+                <h1 class="text-2xl md:text-3xl font-bold mt-1">Cómo obtener la Tabla Nutricional con el INTA</h1>
+                <p class="text-emerald-200 text-sm">Flujograma interactivo y herramientas para emprendedores de alimentos en Chile.</p>
+            </div>
+        </div>
+        <!-- Navigation Tabs -->
+        <div class="bg-emerald-900/90 border-t border-emerald-700/50">
+            <div class="max-w-7xl mx-auto px-4 flex gap-2 overflow-x-auto">
+                <button onclick="switchTab('flowchart')" id="btn-flowchart" class="px-4 py-2.5 text-sm font-medium border-b-2 border-white text-white transition whitespace-nowrap">🗺️ Flujograma Interactivo</button>
+                <button onclick="switchTab('checklist')" id="btn-checklist" class="px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-emerald-200 hover:text-white transition whitespace-nowrap">📋 Orden de Servicio y Tareas</button>
+                <button onclick="switchTab('calculator')" id="btn-calculator" class="px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-emerald-200 hover:text-white transition whitespace-nowrap">⚖️ Calculadora de Muestras (Norma N° 91)</button>
+                <button onclick="switchTab('qrgenerator')" id="btn-qrgenerator" class="px-4 py-2.5 text-sm font-medium border-b-2 border-transparent text-emerald-200 hover:text-white transition whitespace-nowrap">🏷️ Generador Smart QR (Innovación)</button>
             </div>
         </div>
     </header>
 
-    <!-- Interactive Entrepreneur Simulator & Alert Filter Bar -->
-    <section class="bg-white border-b border-slate-200 shadow-sm z-20">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3.5">
-            <div class="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
-                <div class="flex items-center gap-2 text-xs font-bold uppercase tracking-wider text-slate-500">
-                    <i class="fa-solid fa-sliders text-teal-600 text-sm"></i>
-                    <span>Personaliza tu flujo (Simulador de condiciones):</span>
-                </div>
-                
-                <div class="flex flex-wrap items-center gap-2.5">
-                    <label class="cursor-pointer select-none inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all bg-slate-50 border-slate-200 hover:border-teal-400 has-[:checked]:bg-amber-50 has-[:checked]:border-amber-400 has-[:checked]:text-amber-900">
-                        <input type="checkbox" id="filter-new-client" checked onchange="applySimulatorFilters()" class="rounded text-amber-600 focus:ring-amber-500">
-                        <i class="fa-solid fa-user-plus text-amber-600"></i>
-                        <span>Soy cliente nuevo</span>
-                    </label>
+    <!-- Main Container -->
+    <main class="max-w-7xl mx-auto px-4 py-8 flex-grow w-full">
 
-                    <label class="cursor-pointer select-none inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all bg-slate-50 border-slate-200 hover:border-teal-400 has-[:checked]:bg-sky-50 has-[:checked]:border-sky-400 has-[:checked]:text-sky-900">
-                        <input type="checkbox" id="filter-cold-chain" onchange="applySimulatorFilters()" class="rounded text-sky-600 focus:ring-sky-500">
-                        <i class="fa-solid fa-snowflake text-sky-600"></i>
-                        <span>Requiere cadena de frío</span>
-                    </label>
-
-                    <label class="cursor-pointer select-none inline-flex items-center gap-2 px-3 py-1.5 rounded-xl border text-xs font-medium transition-all bg-slate-50 border-slate-200 hover:border-teal-400 has-[:checked]:bg-rose-50 has-[:checked]:border-rose-400 has-[:checked]:text-rose-900">
-                        <input type="checkbox" id="filter-micro" onchange="applySimulatorFilters()" class="rounded text-rose-600 focus:ring-rose-500">
-                        <i class="fa-solid fa-bacterium text-rose-600"></i>
-                        <span>Incluye análisis microbiológico</span>
-                    </label>
-
-                    <button onclick="openCalculatorModal()" class="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs font-semibold shadow-sm transition">
-                        <i class="fa-solid fa-scale-balanced"></i>
-                        <span>Calculadora de Muestra (400 g)</span>
-                    </button>
+        <!-- TAB 1: FLOWCHART -->
+        <div id="tab-flowchart" class="tab-content active space-y-8">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 flex flex-col md:flex-row items-center justify-between gap-4">
+                <div>
+                    <h2 class="text-xl font-bold text-slate-900">Mapa de Proceso del INTA (8 Pasos Clave)</h2>
+                    <p class="text-slate-600 text-sm mt-1">Haz clic en cualquier fase o paso para desplegar los detalles operativos, requisitos de la Orden de Servicio y las condiciones de la cotización.</p>
                 </div>
             </div>
 
-            <div id="dynamic-alerts-bar" class="mt-3 pt-2.5 border-t border-slate-100 flex flex-wrap gap-2"></div>
-        </div>
-    </section>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Fase 1 -->
+                <div class="bg-gradient-to-b from-emerald-50 to-white p-5 rounded-2xl border border-emerald-200 shadow-sm flex flex-col">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="bg-emerald-700 text-white text-xs font-bold px-2.5 py-1 rounded-md">FASE 1</span>
+                        <span class="text-xs font-semibold text-emerald-800">Preparación y Solicitud</span>
+                    </div>
+                    <div class="space-y-3 flex-grow">
+                        <div onclick="showStepDetail(1)" class="p-3.5 bg-white rounded-xl border border-emerald-200 hover:border-emerald-500 cursor-pointer shadow-xs transition hover:shadow-md group">
+                            <span class="font-bold text-slate-900 group-hover:text-emerald-700 text-sm block">Paso 1: Solicitud de Cotización</span>
+                            <p class="text-xs text-slate-600 mt-1">Enviar matriz y análisis a atecnica@inta.uchile.cl</p>
+                        </div>
+                        <div onclick="showStepDetail(2)" class="p-3.5 bg-white rounded-xl border border-emerald-200 hover:border-emerald-500 cursor-pointer shadow-xs transition hover:shadow-md group">
+                            <span class="font-bold text-slate-900 group-hover:text-emerald-700 text-sm block">Paso 2: Recepción de Cotización</span>
+                            <p class="text-xs text-slate-600 mt-1">Revisar cotización oficial (ej. N° 19674, válida 60 días).</p>
+                        </div>
+                    </div>
+                </div>
 
-    <!-- Main Workspace -->
-    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        
-        <!-- VIEW 1: INTERACTIVE VISUAL FLOWCHART -->
-        <div id="view-flowchart" class="block">
-            <div class="mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                <p class="text-sm text-slate-600 flex items-center gap-2">
-                    <span class="inline-flex items-center justify-center w-6 h-6 rounded-full bg-teal-100 text-teal-700 text-xs font-bold">
-                        <i class="fa-solid fa-hand-pointer"></i>
-                    </span>
-                    <span>Haz clic en cualquier <strong>nodo del flujograma</strong> para ver sus requisitos exactos, contactos, datos bancarios y checklists.</span>
-                </p>
-                <div class="flex items-center gap-4 text-xs text-slate-500">
-                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-white border-2 border-slate-300 inline-block"></span> Pendiente</span>
-                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-teal-500 inline-block"></span> Completado</span>
-                    <span class="flex items-center gap-1.5"><span class="w-3 h-3 rounded-full bg-rose-500 inline-block"></span> Alerta crítica</span>
+                <!-- Fase 2 -->
+                <div class="bg-gradient-to-b from-blue-50 to-white p-5 rounded-2xl border border-blue-200 shadow-sm flex flex-col">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="bg-blue-700 text-white text-xs font-bold px-2.5 py-1 rounded-md">FASE 2</span>
+                        <span class="text-xs font-semibold text-blue-800">Pago, Muestras y Envío</span>
+                    </div>
+                    <div class="space-y-3 flex-grow">
+                        <div onclick="showStepDetail(3)" class="p-3.5 bg-white rounded-xl border border-blue-200 hover:border-blue-500 cursor-pointer shadow-xs transition hover:shadow-md group">
+                            <span class="font-bold text-slate-900 group-hover:text-blue-700 text-sm block">Paso 3: Pago Anticipado</span>
+                            <p class="text-xs text-slate-600 mt-1">Banco Santander Cta 7074945-9. Comprobante a cgolusda@.</p>
+                        </div>
+                        <div onclick="showStepDetail(4)" class="p-3.5 bg-white rounded-xl border border-blue-200 hover:border-blue-500 cursor-pointer shadow-xs transition hover:shadow-md group">
+                            <span class="font-bold text-slate-900 group-hover:text-blue-700 text-sm block">Paso 4: Preparación de Muestras</span>
+                            <p class="text-xs text-slate-600 mt-1">Min 400g y 6 unidades del mismo lote (Norma N° 91).</p>
+                        </div>
+                        <div onclick="showStepDetail(5)" class="p-3.5 bg-white rounded-xl border border-blue-200 hover:border-blue-500 cursor-pointer shadow-xs transition hover:shadow-md group">
+                            <span class="font-bold text-slate-900 group-hover:text-blue-700 text-sm block">Paso 5: Despacho y Orden de Servicio</span>
+                            <p class="text-xs text-slate-600 mt-1">Av. El Líbano 5524, Macul. L-V 9:00-16:00 hrs.</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fase 3 -->
+                <div class="bg-gradient-to-b from-purple-50 to-white p-5 rounded-2xl border border-purple-200 shadow-sm flex flex-col">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="bg-purple-700 text-white text-xs font-bold px-2.5 py-1 rounded-md">FASE 3</span>
+                        <span class="text-xs font-semibold text-purple-800">Análisis y Resultados</span>
+                    </div>
+                    <div class="space-y-3 flex-grow">
+                        <div onclick="showStepDetail(6)" class="p-3.5 bg-white rounded-xl border border-purple-200 hover:border-purple-500 cursor-pointer shadow-xs transition hover:shadow-md group">
+                            <span class="font-bold text-slate-900 group-hover:text-purple-700 text-sm block">Paso 6: Análisis de Laboratorio</span>
+                            <p class="text-xs text-slate-600 mt-1">15 días hábiles (Proximal, azúcares, sodio, fibra).</p>
+                        </div>
+                        <div onclick="showStepDetail(7)" class="p-3.5 bg-white rounded-xl border border-purple-200 hover:border-purple-500 cursor-pointer shadow-xs transition hover:shadow-md group">
+                            <span class="font-bold text-slate-900 group-hover:text-purple-700 text-sm block">Paso 7: Informe y Uso de Marca</span>
+                            <p class="text-xs text-slate-600 mt-1">Prohibido uso de logo INTA sin autorización (Multa 550 UF).</p>
+                        </div>
+                        <div onclick="showStepDetail(8)" class="p-3.5 bg-white rounded-xl border border-purple-200 hover:border-purple-500 cursor-pointer shadow-xs transition hover:shadow-md group">
+                            <span class="font-bold text-slate-900 group-hover:text-purple-700 text-sm block">Paso 8: Digitalización Smart QR</span>
+                            <p class="text-xs text-slate-600 mt-1">Transforma tu tabla en un código QR interactivo.</p>
+                        </div>
+                    </div>
                 </div>
             </div>
 
-            <div class="flowchart-bg rounded-2xl border border-slate-200/90 shadow-inner p-4 sm:p-8 relative overflow-hidden space-y-6">
-                
-                <!-- PHASE 1: GESTIÓN COMERCIAL Y PAGO -->
-                <div>
-                    <span class="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 bg-white/80 px-3 py-1 rounded-full border border-slate-200/80 mb-3">
-                        <i class="fa-solid fa-file-invoice-dollar text-teal-600"></i> Fase 1: Cotización y Habilitación Financiera
-                    </span>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-11 gap-4 items-stretch">
-                    <!-- Node 1 -->
-                    <div id="node-card-1" onclick="selectStep(1)" class="lg:col-span-5 flow-node cursor-pointer bg-white rounded-2xl p-5 border-2 border-slate-200 shadow-sm hover:shadow-md hover:border-teal-500 relative group flex flex-col justify-between">
-                        <div>
-                            <div class="flex items-center justify-between gap-2 mb-3">
-                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#0F2942] text-white text-xs font-bold">PASO 1</span>
-                                <div class="flex items-center gap-2">
-                                    <span class="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-teal-50 text-teal-700 border border-teal-200">Exento IVA</span>
-                                    <button onclick="event.stopPropagation(); toggleComplete(1)" id="check-btn-1" class="w-7 h-7 rounded-full border-2 border-slate-300 flex items-center justify-center text-slate-300 hover:border-teal-500 hover:text-teal-500 transition">
-                                        <i class="fa-solid fa-check text-xs"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <h3 class="text-base sm:text-lg font-bold text-slate-900 group-hover:text-teal-700 transition flex items-center gap-2">
-                                <i class="fa-solid fa-envelope-open-text text-teal-600"></i> Solicitud de Cotización
-                            </h3>
-                            <p class="text-xs sm:text-sm text-slate-600 mt-1.5 leading-relaxed">
-                                Contactar a Asistencia Técnica INTA para cotizar Etiquetado Nutricional (Proximal, Azúcares, Sodio, Fibra).
-                            </p>
-                        </div>
-                        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                            <span class="font-medium text-slate-500"><i class="fa-solid fa-at text-teal-600 mr-1"></i>atecnica@inta.uchile.cl</span>
-                            <span class="font-semibold text-teal-600 group-hover:translate-x-1 transition-transform">Ver detalles <i class="fa-solid fa-arrow-right ml-1"></i></span>
-                        </div>
-                    </div>
-
-                    <!-- Connector 1 -> 2 -->
-                    <div class="lg:col-span-1 flex items-center justify-center py-1 lg:py-0">
-                        <div class="hidden lg:flex flex-col items-center w-full">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase mb-1">Acepta</span>
-                            <svg class="w-full h-6 text-teal-500" viewBox="0 0 60 24" fill="none">
-                                <line x1="0" y1="12" x2="48" y2="12" stroke="currentColor" stroke-width="2.5" class="flow-line-animated"/>
-                                <polygon points="48,6 60,12 48,18" fill="currentColor"/>
-                            </svg>
-                        </div>
-                        <div class="flex lg:hidden flex-col items-center">
-                            <svg class="w-6 h-8 text-teal-500" viewBox="0 0 24 32" fill="none">
-                                <line x1="12" y1="0" x2="12" y2="22" stroke="currentColor" stroke-width="2.5" class="flow-line-animated"/>
-                                <polygon points="6,22 12,32 18,22" fill="currentColor"/>
-                            </svg>
-                        </div>
-                    </div>
-
-                    <!-- Node 2 -->
-                    <div id="node-card-2" onclick="selectStep(2)" class="lg:col-span-5 flow-node cursor-pointer bg-white rounded-2xl p-5 border-2 border-slate-200 shadow-sm hover:shadow-md hover:border-teal-500 relative group flex flex-col justify-between">
-                        <div>
-                            <div class="flex items-center justify-between gap-2 mb-3">
-                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#0F2942] text-white text-xs font-bold">PASO 2</span>
-                                <div class="flex items-center gap-2">
-                                    <span id="badge-step-2" class="text-[11px] font-bold px-2 py-0.5 rounded-md bg-amber-100 text-amber-800 border border-amber-300">Pago Previo</span>
-                                    <button onclick="event.stopPropagation(); toggleComplete(2)" id="check-btn-2" class="w-7 h-7 rounded-full border-2 border-slate-300 flex items-center justify-center text-slate-300 hover:border-teal-500 hover:text-teal-500 transition">
-                                        <i class="fa-solid fa-check text-xs"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <h3 class="text-base sm:text-lg font-bold text-slate-900 group-hover:text-teal-700 transition flex items-center gap-2">
-                                <i class="fa-solid fa-building-columns text-amber-600"></i> Pago Anticipado y Facturación
-                            </h3>
-                            <p class="text-xs sm:text-sm text-slate-600 mt-1.5 leading-relaxed">
-                                Transferir en UF a cuenta U. de Chile y enviar comprobante a cgolusda@inta.uchile.cl.
-                            </p>
-                        </div>
-                        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                            <span class="font-medium text-slate-500"><i class="fa-solid fa-paper-plane text-amber-600 mr-1"></i>Cta Cte 7074945-9</span>
-                            <span class="font-semibold text-teal-600 group-hover:translate-x-1 transition-transform">Datos bancarios <i class="fa-solid fa-arrow-right ml-1"></i></span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- PHASE 2: PREPARACIÓN DOCUMENTAL Y MUESTRA -->
-                <div>
-                    <span class="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 bg-white/80 px-3 py-1 rounded-full border border-slate-200/80 mb-3">
-                        <i class="fa-solid fa-boxes-packing text-teal-600"></i> Fase 2: Preparación de Muestra y Orden de Servicio (v2026)
-                    </span>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-11 gap-4 items-stretch">
-                    <!-- Node 4 -->
-                    <div id="node-card-4" onclick="selectStep(4)" class="order-3 lg:order-1 lg:col-span-5 flow-node cursor-pointer bg-white rounded-2xl p-5 border-2 border-slate-200 shadow-sm hover:shadow-md hover:border-teal-500 relative group flex flex-col justify-between">
-                        <div>
-                            <div class="flex items-center justify-between gap-2 mb-3">
-                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#0F2942] text-white text-xs font-bold">PASO 4</span>
-                                <div class="flex items-center gap-2">
-                                    <span class="text-[11px] font-bold px-2 py-0.5 rounded-md bg-indigo-50 text-indigo-700 border border-indigo-200">Obligatorio</span>
-                                    <button onclick="event.stopPropagation(); toggleComplete(4)" id="check-btn-4" class="w-7 h-7 rounded-full border-2 border-slate-300 flex items-center justify-center text-slate-300 hover:border-teal-500 hover:text-teal-500 transition">
-                                        <i class="fa-solid fa-check text-xs"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <h3 class="text-base sm:text-lg font-bold text-slate-900 group-hover:text-teal-700 transition flex items-center gap-2">
-                                <i class="fa-solid fa-file-signature text-indigo-600"></i> Llenado Orden de Servicio (v2026)
-                            </h3>
-                            <p class="text-xs sm:text-sm text-slate-600 mt-1.5 leading-relaxed">
-                                Completar formulario oficial: tamaño porción (g/ml), porciones por envase, lote y firma.
-                            </p>
-                        </div>
-                        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                            <span class="font-medium text-indigo-600"><i class="fa-solid fa-list-check mr-1"></i>Incluye checklist</span>
-                            <span class="font-semibold text-teal-600 group-hover:translate-x-1 transition-transform">Ver formulario <i class="fa-solid fa-arrow-right ml-1"></i></span>
-                        </div>
-                    </div>
-
-                    <!-- Connector 3 <- 4 -->
-                    <div class="order-2 lg:order-2 lg:col-span-1 flex items-center justify-center py-1 lg:py-0">
-                        <div class="hidden lg:flex flex-col items-center w-full">
-                            <span class="text-[10px] font-bold text-slate-400 uppercase mb-1">Luego</span>
-                            <svg class="w-full h-6 text-teal-500" viewBox="0 0 60 24" fill="none">
-                                <line x1="60" y1="12" x2="12" y2="12" stroke="currentColor" stroke-width="2.5" class="flow-line-animated"/>
-                                <polygon points="12,6 0,12 12,18" fill="currentColor"/>
-                            </svg>
-                        </div>
-                        <div class="flex lg:hidden flex-col items-center">
-                            <svg class="w-6 h-8 text-teal-500" viewBox="0 0 24 32" fill="none">
-                                <line x1="12" y1="0" x2="12" y2="22" stroke="currentColor" stroke-width="2.5" class="flow-line-animated"/>
-                                <polygon points="6,22 12,32 18,22" fill="currentColor"/>
-                            </svg>
-                        </div>
-                    </div>
-
-                    <!-- Node 3 -->
-                    <div id="node-card-3" onclick="selectStep(3)" class="order-1 lg:order-3 lg:col-span-5 flow-node cursor-pointer bg-white rounded-2xl p-5 border-2 border-slate-200 shadow-sm hover:shadow-md hover:border-teal-500 relative group flex flex-col justify-between">
-                        <div>
-                            <div class="flex items-center justify-between gap-2 mb-3">
-                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#0F2942] text-white text-xs font-bold">PASO 3</span>
-                                <div class="flex items-center gap-2">
-                                    <span id="badge-step-3" class="text-[11px] font-bold px-2 py-0.5 rounded-md bg-teal-50 text-teal-800 border border-teal-200">Mín. 400 g</span>
-                                    <button onclick="event.stopPropagation(); toggleComplete(3)" id="check-btn-3" class="w-7 h-7 rounded-full border-2 border-slate-300 flex items-center justify-center text-slate-300 hover:border-teal-500 hover:text-teal-500 transition">
-                                        <i class="fa-solid fa-check text-xs"></i>
-                                    </button>
-                                </div>
-                            </div>
-                            <h3 class="text-base sm:text-lg font-bold text-slate-900 group-hover:text-teal-700 transition flex items-center gap-2">
-                                <i class="fa-solid fa-box-open text-teal-600"></i> Preparación de Muestra (Norma N° 91)
-                            </h3>
-                            <p class="text-xs sm:text-sm text-slate-600 mt-1.5 leading-relaxed">
-                                Reunir 400 g (o ml) en envases cerrados. Sugerido: 6 unidades del mismo lote para compósito.
-                            </p>
-                        </div>
-                        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                            <span class="font-medium text-slate-500"><i class="fa-solid fa-shield-halved text-teal-600 mr-1"></i>Norma N° 91</span>
-                            <span class="font-semibold text-teal-600 group-hover:translate-x-1 transition-transform">Ver reglas <i class="fa-solid fa-arrow-right ml-1"></i></span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- PHASE 3: LOGÍSTICA, LABORATORIO Y ENTREGA LEGAL -->
-                <div>
-                    <span class="inline-flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-slate-400 bg-white/80 px-3 py-1 rounded-full border border-slate-200/80 mb-3">
-                        <i class="fa-solid fa-microscope text-teal-600"></i> Fase 3: Recepción en Macul, Análisis y Uso Legal del Informe
-                    </span>
-                </div>
-
-                <div class="grid grid-cols-1 lg:grid-cols-11 gap-4 items-stretch">
-                    <!-- Node 5 -->
-                    <div id="node-card-5" onclick="selectStep(5)" class="lg:col-span-3 flow-node cursor-pointer bg-white rounded-2xl p-5 border-2 border-slate-200 shadow-sm hover:shadow-md hover:border-teal-500 relative group flex flex-col justify-between">
-                        <div>
-                            <div class="flex items-center justify-between gap-2 mb-3">
-                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#0F2942] text-white text-xs font-bold">PASO 5</span>
-                                <button onclick="event.stopPropagation(); toggleComplete(5)" id="check-btn-5" class="w-7 h-7 rounded-full border-2 border-slate-300 flex items-center justify-center text-slate-300 hover:border-teal-500 hover:text-teal-500 transition">
-                                    <i class="fa-solid fa-check text-xs"></i>
-                                </button>
-                            </div>
-                            <div id="badge-step-5" class="mb-2">
-                                <span class="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 border border-slate-200">Lun-Vie 9-16 hrs</span>
-                            </div>
-                            <h3 class="text-base font-bold text-slate-900 group-hover:text-teal-700 transition flex items-center gap-2">
-                                <i class="fa-solid fa-truck-ramp-box text-teal-600"></i> Envío y Recepción INTA
-                            </h3>
-                            <p class="text-xs text-slate-600 mt-1.5 leading-relaxed">
-                                Entregar en Av. El Líbano 5524, Macul junto a la Orden de Servicio física.
-                            </p>
-                        </div>
-                        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                            <span class="font-medium text-slate-500">Macul, Stgo</span>
-                            <span class="font-semibold text-teal-600 group-hover:translate-x-1 transition-transform">Ver más <i class="fa-solid fa-arrow-right ml-1"></i></span>
-                        </div>
-                    </div>
-
-                    <!-- Arrow 5 -> 6 -->
-                    <div class="lg:col-span-1 flex items-center justify-center py-1 lg:py-0">
-                        <svg class="hidden lg:block w-full h-6 text-teal-500" viewBox="0 0 48 24" fill="none">
-                            <line x1="0" y1="12" x2="36" y2="12" stroke="currentColor" stroke-width="2.5" class="flow-line-animated"/>
-                            <polygon points="36,6 48,12 36,18" fill="currentColor"/>
-                        </svg>
-                        <svg class="block lg:hidden w-6 h-8 text-teal-500" viewBox="0 0 24 32" fill="none">
-                            <line x1="12" y1="0" x2="12" y2="22" stroke="currentColor" stroke-width="2.5" class="flow-line-animated"/>
-                            <polygon points="6,22 12,32 18,22" fill="currentColor"/>
-                        </svg>
-                    </div>
-
-                    <!-- Node 6 -->
-                    <div id="node-card-6" onclick="selectStep(6)" class="lg:col-span-3 flow-node cursor-pointer bg-white rounded-2xl p-5 border-2 border-slate-200 shadow-sm hover:shadow-md hover:border-teal-500 relative group flex flex-col justify-between">
-                        <div>
-                            <div class="flex items-center justify-between gap-2 mb-3">
-                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-[#0F2942] text-white text-xs font-bold">PASO 6</span>
-                                <button onclick="event.stopPropagation(); toggleComplete(6)" id="check-btn-6" class="w-7 h-7 rounded-full border-2 border-slate-300 flex items-center justify-center text-slate-300 hover:border-teal-500 hover:text-teal-500 transition">
-                                    <i class="fa-solid fa-check text-xs"></i>
-                                </button>
-                            </div>
-                            <div class="mb-2">
-                                <span class="text-[11px] font-bold px-2 py-0.5 rounded-md bg-teal-50 text-teal-700 border border-teal-200">15 días hábiles</span>
-                            </div>
-                            <h3 class="text-base font-bold text-slate-900 group-hover:text-teal-700 transition flex items-center gap-2">
-                                <i class="fa-solid fa-flask text-teal-600"></i> Análisis de Laboratorio
-                            </h3>
-                            <p class="text-xs text-slate-600 mt-1.5 leading-relaxed">
-                                Ensayos oficiales NCh y AOAC (Proximal, azúcares, sodio, fibra).
-                            </p>
-                        </div>
-                        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                            <span class="font-medium text-slate-500">NCh / AOAC</span>
-                            <span class="font-semibold text-teal-600 group-hover:translate-x-1 transition-transform">Ver más <i class="fa-solid fa-arrow-right ml-1"></i></span>
-                        </div>
-                    </div>
-
-                    <!-- Arrow 6 -> 7 -->
-                    <div class="lg:col-span-1 flex items-center justify-center py-1 lg:py-0">
-                        <svg class="hidden lg:block w-full h-6 text-teal-500" viewBox="0 0 48 24" fill="none">
-                            <line x1="0" y1="12" x2="36" y2="12" stroke="currentColor" stroke-width="2.5" class="flow-line-animated"/>
-                            <polygon points="36,6 48,12 36,18" fill="currentColor"/>
-                        </svg>
-                        <svg class="block lg:hidden w-6 h-8 text-teal-500" viewBox="0 0 24 32" fill="none">
-                            <line x1="12" y1="0" x2="12" y2="22" stroke="currentColor" stroke-width="2.5" class="flow-line-animated"/>
-                            <polygon points="6,22 12,32 18,22" fill="currentColor"/>
-                        </svg>
-                    </div>
-
-                    <!-- Node 7 -->
-                    <div id="node-card-7" onclick="selectStep(7)" class="lg:col-span-3 flow-node cursor-pointer bg-white rounded-2xl p-5 border-2 border-rose-200 shadow-sm hover:shadow-md hover:border-rose-500 relative group flex flex-col justify-between">
-                        <div>
-                            <div class="flex items-center justify-between gap-2 mb-3">
-                                <span class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-emerald-700 text-white text-xs font-bold">PASO 7</span>
-                                <button onclick="event.stopPropagation(); toggleComplete(7)" id="check-btn-7" class="w-7 h-7 rounded-full border-2 border-slate-300 flex items-center justify-center text-slate-300 hover:border-teal-500 hover:text-teal-500 transition">
-                                    <i class="fa-solid fa-check text-xs"></i>
-                                </button>
-                            </div>
-                            <div class="mb-2">
-                                <span class="text-[11px] font-bold px-2 py-0.5 rounded-md bg-rose-100 text-rose-800 border border-rose-300">Prohibido Logo INTA</span>
-                            </div>
-                            <h3 class="text-base font-bold text-slate-900 group-hover:text-rose-700 transition flex items-center gap-2">
-                                <i class="fa-solid fa-award text-emerald-600"></i> Informe y Uso Legal
-                            </h3>
-                            <p class="text-xs text-slate-600 mt-1.5 leading-relaxed">
-                                Rotulación según RSA y Ley 20.606. Multa de 550 UF por mal uso de marca.
-                            </p>
-                        </div>
-                        <div class="mt-4 pt-3 border-t border-slate-100 flex items-center justify-between text-xs">
-                            <span class="font-bold text-rose-600">Cláusula 550 UF</span>
-                            <span class="font-semibold text-teal-600 group-hover:translate-x-1 transition-transform">Ver reglas <i class="fa-solid fa-arrow-right ml-1"></i></span>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Step 8: Innovation Smart QR (Full Width Footer Node) -->
-                <div>
-                    <div id="node-card-8" onclick="selectStep(8)" class="flow-node cursor-pointer bg-gradient-to-r from-purple-900 via-[#1F1135] to-[#0F2942] rounded-2xl p-5 border-2 border-purple-400 shadow-md hover:shadow-lg relative group flex flex-col md:flex-row items-center justify-between gap-4 text-white">
-                        <div class="flex items-center gap-4">
-                            <div class="w-12 h-12 rounded-xl bg-purple-500/20 border border-purple-400/40 flex items-center justify-center shrink-0">
-                                <i class="fa-solid fa-qrcode text-purple-300 text-2xl"></i>
-                            </div>
-                            <div>
-                                <div class="flex items-center gap-2 mb-1">
-                                    <span class="px-2.5 py-0.5 rounded-md bg-purple-500 text-white text-[11px] font-extrabold">PASO 8 • INNOVACIÓN</span>
-                                    <span class="text-xs text-purple-200">Smart QR Digital Link</span>
-                                </div>
-                                <h3 class="text-lg font-bold text-white">Digitalización Fácil: Del Papel al Código QR Interactivo</h3>
-                                <p class="text-xs text-purple-200/90 mt-0.5">Transforma tu informe oficial en un código QR escaneable para tus etiquetas, ferias y redes sociales.</p>
-                            </div>
-                        </div>
-                        <div class="flex items-center gap-3 shrink-0">
-                            <button onclick="event.stopPropagation(); switchMainView('qr')" class="px-4 py-2 rounded-xl bg-purple-600 hover:bg-purple-500 text-white text-xs font-semibold shadow-sm transition">
-                                Abrir Generador QR <i class="fa-solid fa-arrow-right ml-1"></i>
-                            </button>
-                            <button onclick="event.stopPropagation(); toggleComplete(8)" id="check-btn-8" class="w-7 h-7 rounded-full border-2 border-purple-300 flex items-center justify-center text-purple-300 hover:border-white hover:text-white transition">
-                                <i class="fa-solid fa-check text-xs"></i>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-            </div>
-        </div>
-
-        <!-- VIEW 2: STEP-BY-STEP CHECKLIST VIEW -->
-        <div id="view-list" class="hidden space-y-4">
-            <div class="bg-white rounded-2xl border border-slate-200 p-5 shadow-sm flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div>
-                    <h2 class="text-lg font-bold text-slate-900">Lista de Verificación Secuencial para Emprendedores</h2>
-                    <p class="text-xs sm:text-sm text-slate-600">Marca cada etapa a medida que avanzas en tu trámite con el INTA.</p>
-                </div>
-                <button onclick="switchMainView('flow')" class="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-800 text-xs font-semibold transition">
-                    <i class="fa-solid fa-diagram-project mr-1.5"></i>Volver al Mapa Visual
-                </button>
-            </div>
-            <div id="checklist-container" class="space-y-3"></div>
-        </div>
-
-        <!-- VIEW 3: SMART QR GENERATOR -->
-        <div id="view-qr" class="hidden space-y-6">
-            <div class="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm max-w-4xl mx-auto">
-                <div class="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6 pb-4 border-b border-slate-100">
+            <!-- Detail Drawer Box -->
+            <div id="stepDetailCard" class="bg-white border-2 border-emerald-600 rounded-2xl p-6 shadow-xl hidden transition-all">
+                <div class="flex justify-between items-start">
                     <div>
-                        <span class="text-xs font-bold uppercase tracking-wider px-2.5 py-1 rounded-md bg-purple-100 text-purple-800">Paso 8 • Innovación Práctica</span>
-                        <h2 class="text-xl font-bold text-slate-900 mt-1">Generador de Smart QR y Tarjeta Nutricional Digital</h2>
-                        <p class="text-xs sm:text-sm text-slate-600">Ingresa los datos de tu informe INTA para generar un código QR 100% válido y escaneable por cualquier teléfono.</p>
+                        <span id="detailStepBadge" class="bg-emerald-100 text-emerald-800 text-xs font-bold px-2.5 py-1 rounded">Paso X</span>
+                        <h3 id="detailTitle" class="text-xl font-bold text-slate-900 mt-2">Título</h3>
                     </div>
-                    <button onclick="loadSampleData()" class="px-4 py-2 rounded-xl bg-purple-50 hover:bg-purple-100 text-purple-700 text-xs font-semibold border border-purple-200 transition">
-                        <i class="fa-solid fa-wand-magic-sparkles mr-1.5"></i>Cargar Ejemplo (Ajo Negro)
-                    </button>
+                    <button onclick="closeStepDetail()" class="text-slate-400 hover:text-slate-600 text-xl font-bold px-2">&times;</button>
+                </div>
+                <div id="detailBody" class="mt-4 text-slate-700 text-sm space-y-3"></div>
+            </div>
+        </div>
+
+        <!-- TAB 2: CHECKLIST -->
+        <div id="tab-checklist" class="tab-content space-y-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+                <h2 class="text-xl font-bold text-slate-900">Lista de Chequeo y Requisitos de la Orden de Servicio</h2>
+                <div class="mt-6 space-y-3" id="checklistContainer">
+                    <label class="flex items-start gap-3 p-3.5 bg-slate-50 hover:bg-slate-100 rounded-xl cursor-pointer border border-slate-200">
+                        <input type="checkbox" class="mt-1 w-4 h-4 text-emerald-600 rounded" onchange="updateProgress()">
+                        <span class="font-semibold text-slate-900 text-sm">1. Definir matriz y análisis requeridos (Proximal, Azúcares, Sodio, Fibra).</span>
+                    </label>
+                    <label class="flex items-start gap-3 p-3.5 bg-slate-50 hover:bg-slate-100 rounded-xl cursor-pointer border border-slate-200">
+                        <input type="checkbox" class="mt-1 w-4 h-4 text-emerald-600 rounded" onchange="updateProgress()">
+                        <span class="font-semibold text-slate-900 text-sm">2. Solicitar cotización formal a atecnica@inta.uchile.cl</span>
+                    </label>
+                    <label class="flex items-start gap-3 p-3.5 bg-slate-50 hover:bg-slate-100 rounded-xl cursor-pointer border border-slate-200">
+                        <input type="checkbox" class="mt-1 w-4 h-4 text-emerald-600 rounded" onchange="updateProgress()">
+                        <span class="font-semibold text-slate-900 text-sm">3. Pago anticipado en Banco Santander Cta 7074945-9 y enviar comprobante a cgolusda@inta.uchile.cl</span>
+                    </label>
+                    <label class="flex items-start gap-3 p-3.5 bg-slate-50 hover:bg-slate-100 rounded-xl cursor-pointer border border-slate-200">
+                        <input type="checkbox" class="mt-1 w-4 h-4 text-emerald-600 rounded" onchange="updateProgress()">
+                        <span class="font-semibold text-slate-900 text-sm">4. Preparar muestras (Mínimo 400g y 6 unidades del mismo lote en envases cerrados).</span>
+                    </label>
+                    <label class="flex items-start gap-3 p-3.5 bg-slate-50 hover:bg-slate-100 rounded-xl cursor-pointer border border-slate-200">
+                        <input type="checkbox" class="mt-1 w-4 h-4 text-emerald-600 rounded" onchange="updateProgress()">
+                        <span class="font-semibold text-slate-900 text-sm">5. Completar y firmar Orden de Servicio (LCA-RG-03-02 v3).</span>
+                    </label>
+                    <label class="flex items-start gap-3 p-3.5 bg-slate-50 hover:bg-slate-100 rounded-xl cursor-pointer border border-slate-200">
+                        <input type="checkbox" class="mt-1 w-4 h-4 text-emerald-600 rounded" onchange="updateProgress()">
+                        <span class="font-semibold text-slate-900 text-sm">6. Entrega física en Av. El Líbano 5524, Macul (L-V 9:00 a 16:00 hrs).</span>
+                    </label>
+                </div>
+                <div class="mt-6 pt-4 border-t border-slate-200 flex items-center gap-4">
+                    <div class="flex-grow bg-slate-200 rounded-full h-3 overflow-hidden">
+                        <div id="progressBar" class="bg-emerald-600 h-full transition-all" style="width: 0%"></div>
+                    </div>
+                    <span id="progressText" class="text-sm font-bold text-slate-700">0 / 6 completados (0%)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- TAB 3: CALCULATOR -->
+        <div id="tab-calculator" class="tab-content space-y-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 max-w-2xl mx-auto">
+                <h2 class="text-xl font-bold text-slate-900">Calculadora de Muestras (Norma N° 91)</h2>
+                <div class="mt-6 space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700">Cantidad de unidades:</label>
+                        <input type="number" id="calcUnits" value="6" class="mt-1 block w-full rounded-xl border border-slate-300 px-3 py-2">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-slate-700">Peso neto por envase (g):</label>
+                        <input type="number" id="calcWeight" value="100" class="mt-1 block w-full rounded-xl border border-slate-300 px-3 py-2">
+                    </div>
+                    <button type="button" onclick="calculateSample()" class="w-full bg-emerald-700 text-white font-semibold py-2.5 rounded-xl">Verificar Requisitos</button>
+                </div>
+                <div id="calcResult" class="mt-6 p-4 rounded-xl hidden"></div>
+            </div>
+        </div>
+
+        <!-- TAB 4: SMART QR GENERATOR -->
+        <div id="tab-qrgenerator" class="tab-content space-y-6">
+            <div class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200 max-w-4xl mx-auto">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-xl font-bold text-slate-900">Generador Smart QR Nutricional</h2>
+                        <p class="text-slate-600 text-sm mt-1">Genera un código QR interactivo instantáneo.</p>
+                    </div>
+                    <button type="button" onclick="loadSampleData()" class="text-xs bg-purple-50 text-purple-700 font-semibold px-3 py-2 rounded-lg border border-purple-200">Cargar Ejemplo (Ajo Negro)</button>
                 </div>
 
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Form Inputs -->
-                    <div class="space-y-3.5">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                    <div class="space-y-4">
                         <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">Nombre del Alimento / Producto</label>
-                            <input type="text" id="qr-name" placeholder="Ej. Ajo Negro Orgánico Gourmet" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none">
+                            <label class="block text-xs font-semibold text-slate-700">Nombre del Producto</label>
+                            <input type="text" id="qrProductName" value="Ajo Negro Orgánico" class="mt-1 block w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">
                         </div>
                         <div class="grid grid-cols-2 gap-3">
                             <div>
-                                <label class="block text-xs font-bold text-slate-700 mb-1">Porción (g o ml)</label>
-                                <input type="text" id="qr-serving" placeholder="Ej. 30g (3 dientes)" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none">
+                                <label class="block text-xs font-semibold text-slate-700">Porción</label>
+                                <input type="text" id="qrServing" value="30g" class="mt-1 block w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-slate-700 mb-1">Calorías (kcal)</label>
-                                <input type="text" id="qr-kcal" placeholder="Ej. 75" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none">
+                                <label class="block text-xs font-semibold text-slate-700">Calorías (kcal)</label>
+                                <input type="text" id="qrKcal" value="75" class="mt-1 block w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">
                             </div>
                         </div>
                         <div class="grid grid-cols-3 gap-2">
                             <div>
-                                <label class="block text-xs font-bold text-slate-700 mb-1">Proteínas (g)</label>
-                                <input type="text" id="qr-prot" placeholder="3.2g" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none">
+                                <label class="block text-xs font-semibold text-slate-700">Proteínas</label>
+                                <input type="text" id="qrProt" value="3.5g" class="mt-1 block w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-slate-700 mb-1">Grasas (g)</label>
-                                <input type="text" id="qr-fat" placeholder="0.4g" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none">
+                                <label class="block text-xs font-semibold text-slate-700">Grasas</label>
+                                <input type="text" id="qrFat" value="0.5g" class="mt-1 block w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">
                             </div>
                             <div>
-                                <label class="block text-xs font-bold text-slate-700 mb-1">Carbohidratos (g)</label>
-                                <input type="text" id="qr-carb" placeholder="14.5g" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none">
+                                <label class="block text-xs font-semibold text-slate-700">Carbohidratos</label>
+                                <input type="text" id="qrCarb" value="15g" class="mt-1 block w-full rounded-xl border border-slate-300 px-3 py-2 text-sm">
                             </div>
                         </div>
-                        <div class="grid grid-cols-2 gap-3">
-                            <div>
-                                <label class="block text-xs font-bold text-slate-700 mb-1">Azúcares Totales (g)</label>
-                                <input type="text" id="qr-sugar" placeholder="8.1g" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none">
-                            </div>
-                            <div>
-                                <label class="block text-xs font-bold text-slate-700 mb-1">Sodio (mg)</label>
-                                <input type="text" id="qr-sodium" placeholder="4mg" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none">
-                            </div>
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">Ingredientes</label>
-                            <input type="text" id="qr-ingredients" placeholder="Ej. Ajo chilote fermentado naturalmente." class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none">
-                        </div>
-                        <div>
-                            <label class="block text-xs font-bold text-slate-700 mb-1">N° Cotización / Referencia INTA</label>
-                            <input type="text" id="qr-cert" placeholder="Ej. Cotización N° 19674" class="w-full px-3.5 py-2 rounded-xl border border-slate-300 text-sm focus:border-purple-500 focus:ring-2 focus:ring-purple-200 outline-none">
-                        </div>
-                        <button onclick="generateSmartQR()" class="w-full py-3 rounded-xl bg-purple-700 hover:bg-purple-800 text-white text-xs sm:text-sm font-bold shadow-md transition">
-                            Generar Código QR Válido y Tarjeta Digital
-                        </button>
+                        <button type="button" onclick="generateSmartQR()" class="w-full bg-purple-700 hover:bg-purple-800 text-white font-semibold py-2.5 rounded-xl shadow-md">Generar Código QR Instantáneo</button>
                     </div>
 
-                    <!-- QR Result Preview -->
                     <div class="bg-slate-50 border border-slate-200 rounded-2xl p-6 flex flex-col items-center justify-center text-center">
-                        <div id="qr-placeholder" class="text-slate-400 text-xs sm:text-sm py-10">
-                            <i class="fa-solid fa-qrcode text-4xl mb-3 text-purple-400 block"></i>
-                            Completa los datos a la izquierda y presiona el botón para generar tu código QR interactivo oficial.
+                        <div id="qrPlaceholder" class="text-slate-400 text-sm">
+                            <span class="text-3xl block mb-2">🏷️📱</span> Haz clic en generar para ver tu QR.
                         </div>
-                        <div id="qr-result-box" class="hidden space-y-4 w-full">
+                        <div id="qrResultContainer" class="hidden space-y-4 w-full">
                             <div class="bg-white p-4 rounded-xl shadow-xs border border-slate-200 inline-block">
-                                <div id="qrcode-render" class="flex justify-center"></div>
-                                <span class="text-[10px] text-slate-500 mt-2 block font-mono">Escanea con la cámara de tu celular</span>
-                            </div>
-                            <div class="bg-white p-4 rounded-xl shadow-sm border border-slate-200 text-left text-xs space-y-2">
-                                <div class="font-bold text-slate-900 border-b pb-1 text-sm flex justify-between items-center">
-                                    <span id="preview-name">Producto</span>
-                                    <span class="text-purple-700 text-[11px] font-semibold bg-purple-50 px-2 py-0.5 rounded">INTA Analizado</span>
-                                </div>
-                                <p class="text-slate-600"><strong>Porción:</strong> <span id="preview-serving">-</span></p>
-                                <p class="text-slate-600"><strong>Energía:</strong> <span id="preview-kcal">-</span> kcal</p>
-                                <div class="grid grid-cols-3 gap-1 bg-slate-50 p-2 rounded text-[11px] font-medium text-slate-700">
-                                    <div>Prot: <span id="preview-prot">-</span></div>
-                                    <div>Grasas: <span id="preview-fat">-</span></div>
-                                    <div>Carb: <span id="preview-carb">-</span></div>
-                                </div>
-                                <p class="text-slate-600"><strong>Azúcares:</strong> <span id="preview-sugar">-</span> | <strong>Sodio:</strong> <span id="preview-sodium">-</span></p>
-                                <p class="text-slate-500 italic text-[11px]">Ref: <span id="preview-cert">-</span></p>
+                                <div id="qrcode" class="flex justify-center p-2 bg-white border rounded"></div>
+                                <span class="text-[10px] text-slate-500 mt-2 block font-mono">Código QR Activo</span>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-
     </main>
 
-    <!-- Footer -->
-    <footer class="bg-white border-t border-slate-200 mt-10 py-6">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-4 text-xs text-slate-500">
-            <div class="flex items-center gap-2">
-                <i class="fa-solid fa-circle-info text-teal-600"></i>
-                <span>Herramienta basada en la <strong>Orden de Servicio v2026</strong> y cotización INTA - Universidad de Chile.</span>
-            </div>
-            <div class="flex items-center gap-4">
-                <span><i class="fa-solid fa-location-dot text-slate-400 mr-1"></i>Av. El Líbano 5524, Macul</span>
-                <span><i class="fa-solid fa-phone text-slate-400 mr-1"></i>+56 2 29781404</span>
-            </div>
-        </div>
-    </footer>
-
-    <!-- SLIDE-OVER DETAIL DRAWER -->
-    <div id="step-drawer-backdrop" onclick="closeDrawer()" class="fixed inset-0 bg-slate-900/50 backdrop-blur-xs z-40 hidden transition-opacity opacity-0"></div>
-    <aside id="step-drawer" class="fixed top-0 right-0 h-full w-full max-w-2xl bg-white shadow-2xl z-50 transform translate-x-full transition-transform duration-300 ease-in-out flex flex-col">
-        <div id="drawer-header" class="px-6 py-5 bg-[#0F2942] text-white flex items-start justify-between gap-4 shrink-0">
-            <div>
-                <div class="flex items-center gap-2 mb-1.5">
-                    <span id="drawer-step-badge" class="px-2.5 py-0.5 rounded-md bg-teal-500 text-white text-xs font-extrabold tracking-wide">PASO 1 DE 8</span>
-                    <span id="drawer-phase-label" class="text-xs text-teal-200 font-medium">Fase 1</span>
-                </div>
-                <h2 id="drawer-title" class="text-xl font-bold leading-snug">Título</h2>
-            </div>
-            <button onclick="closeDrawer()" class="w-9 h-9 rounded-xl bg-white/10 hover:bg-white/20 flex items-center justify-center text-white transition shrink-0">
-                <i class="fa-solid fa-xmark text-lg"></i>
-            </button>
-        </div>
-
-        <div id="drawer-body" class="flex-1 overflow-y-auto p-6 space-y-6"></div>
-
-        <div class="px-6 py-4 bg-slate-50 border-t border-slate-200 flex items-center justify-between gap-3 shrink-0">
-            <button id="drawer-prev-btn" onclick="navigateStep(-1)" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl border border-slate-300 bg-white hover:bg-slate-100 text-slate-700 text-xs sm:text-sm font-semibold transition disabled:opacity-40 disabled:pointer-events-none">
-                <i class="fa-solid fa-arrow-left"></i> Anterior
-            </button>
-            <button id="drawer-complete-btn" onclick="toggleCompleteCurrent()" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition">
-                <i class="fa-solid fa-check"></i> <span id="drawer-complete-text">Marcar paso listo</span>
-            </button>
-            <button id="drawer-next-btn" onclick="navigateStep(1)" class="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-[#0F2942] hover:bg-[#193d61] text-white text-xs sm:text-sm font-semibold transition disabled:opacity-40 disabled:pointer-events-none">
-                Siguiente <i class="fa-solid fa-arrow-right"></i>
-            </button>
-        </div>
-    </aside>
-
-    <!-- CALCULATOR MODAL -->
-    <div id="calc-modal-backdrop" onclick="closeCalculatorModal()" class="fixed inset-0 bg-slate-900/60 backdrop-blur-xs z-50 hidden flex items-center justify-center p-4">
-        <div onclick="event.stopPropagation()" class="bg-white rounded-2xl max-w-lg w-full shadow-2xl border border-slate-200 overflow-hidden">
-            <div class="px-6 py-4 bg-gradient-to-r from-[#0F2942] to-teal-800 text-white flex items-center justify-between">
-                <div class="flex items-center gap-2.5">
-                    <i class="fa-solid fa-scale-balanced text-teal-300 text-lg"></i>
-                    <h3 class="font-bold text-base sm:text-lg">Verificador de Muestra (Norma N° 91)</h3>
-                </div>
-                <button onclick="closeCalculatorModal()" class="text-white/80 hover:text-white p-1"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            <div class="p-6 space-y-4">
-                <p class="text-xs sm:text-sm text-slate-600">
-                    El INTA exige un <strong>mínimo de 400 g (o ml)</strong> y sugiere enviar <strong>6 unidades del mismo lote</strong> para compósito.
-                </p>
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Contenido neto por envase (g o ml)</label>
-                        <input type="number" id="calc-unit-weight" value="100" min="1" oninput="calculateSample()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-teal-500 outline-none text-sm font-semibold">
-                    </div>
-                    <div>
-                        <label class="block text-xs font-bold text-slate-700 mb-1">Cantidad de unidades a enviar</label>
-                        <input type="number" id="calc-unit-count" value="6" min="1" oninput="calculateSample()" class="w-full px-3.5 py-2.5 rounded-xl border border-slate-300 focus:border-teal-500 outline-none text-sm font-semibold">
-                    </div>
-                </div>
-                <div id="calc-result-box" class="rounded-xl p-4 border bg-emerald-50 border-emerald-200 space-y-2"></div>
-            </div>
-            <div class="px-6 py-3.5 bg-slate-50 border-t border-slate-200 flex justify-end">
-                <button onclick="closeCalculatorModal()" class="px-5 py-2 rounded-xl bg-[#0F2942] text-white text-xs font-semibold hover:bg-slate-800 transition">Entendido</button>
-            </div>
-        </div>
-    </div>
-
-    <div id="toast-notification" class="fixed bottom-5 left-1/2 -translate-x-1/2 bg-slate-900 text-white px-4 py-2.5 rounded-xl shadow-lg text-xs font-semibold flex items-center gap-2 opacity-0 pointer-events-none transition-opacity duration-300 z-50">
-        <i class="fa-solid fa-circle-check text-teal-400"></i>
-        <span id="toast-message">Copiado al portapapeles</span>
-    </div>
-
     <script>
-        const stepsData = [
-            {
-                id: 1,
-                phase: "Fase 1: Cotización y Habilitación",
-                title: "Solicitud de Cotización y Definición de Análisis",
-                shortDesc: "Contactar a Asistencia Técnica INTA y solicitar paquete completo para Etiquetado Nutricional.",
-                badge: "Exento IVA • 60 días vigencia",
-                summary: "Todo comienza solicitando una cotización formal al área de Asistencia Técnica del INTA. Para elaborar una tabla nutricional válida ante el Reglamento Sanitario de los Alimentos (RSA), debes solicitar el perfil nutricional estándar.",
-                highlights: [
-                    { label: "Correo Contacto", value: "atecnica@inta.uchile.cl", copyable: true },
-                    { label: "Teléfonos INTA", value: "+56 2 29781404", copyable: false },
-                    { label: "Impuesto", value: "Factura Exenta de IVA", copyable: false }
-                ],
-                analysesList: [
-                    { name: "Análisis Proximal", desc: "Humedad, Cenizas, Proteínas, Grasa Total, Carbohidratos y Energía." },
-                    { name: "Perfil de Azúcares", desc: "Cuantificación de azúcares totales (Cromatografía Líquida)." },
-                    { name: "Sodio", desc: "Espectrofotometría de absorción atómica (clave para sello 'Alto en Sodio')." },
-                    { name: "Fibra Dietética", desc: "Total, Soluble e Insoluble (Método AOAC 991.43)." }
-                ],
-                tips: ["Indica claramente que el objetivo es 'Etiquetado Nutricional según RSA' y menciona la matriz de tu alimento."]
-            },
-            {
-                id: 2,
-                phase: "Fase 1: Cotización y Habilitación",
-                title: "Pago Anticipado y Facturación",
-                shortDesc: "Realizar transferencia previa a la cuenta oficial de la Universidad de Chile.",
-                badge: "Pago 100% Previo Obligatorio",
-                summary: "Para iniciar cualquier análisis en laboratorio, el INTA exige haber recibido previamente el pago del servicio.",
-                bankDetails: [
-                    { label: "Razón Social", value: "Universidad de Chile", copy: "Universidad de Chile" },
-                    { label: "RUT", value: "60.910.000-1", copy: "60.910.000-1" },
-                    { label: "Banco", value: "Banco Santander", copy: "Banco Santander" },
-                    { label: "Cuenta Corriente", value: "7074945-9", copy: "7074945-9" },
-                    { label: "Enviar Comprobante", value: "cgolusda@inta.uchile.cl", copy: "cgolusda@inta.uchile.cl" }
-                ],
-                tips: ["Recuerda que el valor en pesos depende de la UF del día en que tus muestras ingresan al INTA."]
-            },
-            {
-                id: 3,
-                phase: "Fase 2: Muestra y Documentación",
-                title: "Preparación y Toma de Muestra (Norma N° 91)",
-                shortDesc: "Reunir mínimo 400 g en envases sellados con cadena de frío si aplica.",
-                badge: "Mín. 400 g • 6 unidades",
-                summary: "La representatividad de tu tabla nutricional depende de cómo prepares la muestra según la Norma General Técnica N° 91 del MINSAL.",
-                sampleRules: [
-                    { title: "Gramaje Mínimo", value: "Al menos 400 g (o ml)", desc: "Cantidad mínima para ejecutar ensayos y contramuestras." },
-                    { title: "Unidades Sugeridas", value: "6 unidades del mismo lote", desc: "Para formar un compósito homogéneo representativo." }
-                ],
-                tips: ["Si tu producto es perecible, trasládalo con unidades refrigerantes (gel packs)."]
-            },
-            {
-                id: 4,
-                phase: "Fase 2: Muestra y Documentación",
-                title: "Llenado Orden de Servicio Oficial (v2026)",
-                shortDesc: "Completar todos los campos del formulario oficial v2026, porción y firma.",
-                badge: "Documento Obligatorio",
-                summary: "La Orden de Servicio es el contrato técnico oficial que acompaña a tu alimento. Sin ella, el laboratorio no puede procesar la muestra.",
-                interactiveChecklist: [
-                    "Tengo el N° de Cotización anotado",
-                    "El nombre del producto está escrito correctamente",
-                    "Definí el tamaño de la porción (g o ml)",
-                    "Indiqué lote, fecha de elaboración y temperatura",
-                    "Imprimí y firmé la Orden de Servicio"
-                ],
-                tips: ["Guarda una foto de tu Orden de Servicio firmada."]
-            },
-            {
-                id: 5,
-                phase: "Fase 3: Recepción y Laboratorio",
-                title: "Envío y Recepción en Laboratorio",
-                shortDesc: "Entregar en Av. El Líbano 5524, Macul (Lun-Vie 9:00 a 16:00 hrs).",
-                badge: "Macul • 9:00 a 16:00 hrs",
-                summary: "Entregar el paquete en la Dirección de Asistencia Técnica del INTA junto con la Orden de Servicio física.",
-                highlights: [
-                    { label: "Dirección", value: "Av. El Líbano 5524, Macul, Santiago", copyable: true },
-                    { label: "Horario General", value: "Lunes a Viernes 9:00 a 16:00 hrs", copyable: false },
-                    { label: "Microbiología", value: "Deben llegar ANTES de las 13:00 hrs", copyable: false }
-                ],
-                tips: ["Coloca la Orden de Servicio dentro de una funda plástica adherida a la caja."]
-            },
-            {
-                id: 6,
-                phase: "Fase 3: Recepción y Laboratorio",
-                title: "Procesamiento y Plazos de Entrega",
-                shortDesc: "Ejecución de ensayos bajo normas NCh/AOAC en 15 días hábiles.",
-                badge: "15 días hábiles",
-                summary: "Con la muestra recepcionada conforme, comienzan los ensayos en laboratorios estandarizados del INTA.",
-                highlights: [
-                    { label: "Plazo Estándar", value: "15 días hábiles", copyable: false },
-                    { label: "Estándares", value: "Normas Chilenas (NCh) y AOAC International", copyable: false }
-                ],
-                tips: ["Los días hábiles se cuentan desde que el pago, muestra y orden están OK en conjunto."]
-            },
-            {
-                id: 7,
-                phase: "Fase 3: Recepción y Laboratorio",
-                title: "Recepción de Informe y Uso Legal",
-                shortDesc: "Obtención de tabla. Prohibido usar logo INTA (Cláusula penal 550 UF).",
-                badge: "Multa 550 UF",
-                summary: "Recibirás tu Informe de Ensayo oficial con los nutrientes por 100 g/ml y por porción para diseñar tu rotulado nutricional.",
-                legalRules: [
-                    { allowed: true, text: "Usar los valores numéricos del informe para la Tabla Nutricional en tu envase." },
-                    { allowed: true, text: "Presentar el informe íntegro ante la SEREMI de Salud si lo solicita." },
-                    { allowed: false, text: "Colocar frases como 'Certificado por INTA' o el logo de la U. de Chile en redes o etiquetas." }
-                ],
-                tips: ["Verifica si tu producto requiere sellos negros 'ALTO EN' según Ley 20.606."]
-            },
-            {
-                id: 8,
-                phase: "Fase 3: Innovación y Comercialización",
-                title: "Digitalización con Smart QR (Innovación Práctica)",
-                shortDesc: "Convierte tus datos oficiales en un código QR interactivo para ferias y envases.",
-                badge: "Smart QR Emprendedor",
-                summary: "No te limites al papel. Transforma tu tabla nutricional en un código QR dinámico que tus clientes puedan escanear en ferias, tiendas o puntos de venta para conocer los valores y tu historia.",
-                tips: ["Usa la pestaña 'Smart QR' en la parte superior para generar y probar tu código gratis."]
-            }
-        ];
-
-        let currentStepId = 1;
-        let completedSteps = JSON.parse(localStorage.getItem('inta_completed_steps') || '[]');
-        let orderChecklistState = JSON.parse(localStorage.getItem('inta_order_checklist') || '{}');
-
-        document.addEventListener('DOMContentLoaded', () => {
-            updateProgressUI();
-            applySimulatorFilters();
-            renderChecklistView();
-        });
-
-        function switchMainView(view) {
-            const flowEl = document.getElementById('view-flowchart');
-            const listEl = document.getElementById('view-list');
-            const qrEl = document.getElementById('view-qr');
-            const btnFlow = document.getElementById('btn-view-flow');
-            const btnList = document.getElementById('btn-view-list');
-            const btnQr = document.getElementById('btn-view-qr');
-
-            flowEl.classList.add('hidden');
-            listEl.classList.add('hidden');
-            qrEl.classList.add('hidden');
-            btnFlow.className = "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-200 hover:text-white transition";
-            btnList.className = "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-200 hover:text-white transition";
-            btnQr.className = "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold text-slate-200 hover:text-white transition";
-
-            if (view === 'flow') {
-                flowEl.classList.remove('hidden');
-                btnFlow.className = "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold bg-white text-[#0F2942] shadow-sm transition";
-            } else if (view === 'list') {
-                listEl.classList.remove('hidden');
-                btnList.className = "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold bg-white text-[#0F2942] shadow-sm transition";
-                renderChecklistView();
-            } else if (view === 'qr') {
-                qrEl.classList.remove('hidden');
-                btnQr.className = "flex items-center gap-2 px-3.5 py-2 rounded-lg text-xs font-semibold bg-white text-[#0F2942] shadow-sm transition";
-            }
-        }
-
-        function applySimulatorFilters() {
-            const isNewClient = document.getElementById('filter-new-client').checked;
-            const isColdChain = document.getElementById('filter-cold-chain').checked;
-            const isMicro = document.getElementById('filter-micro').checked;
-            const alertsBar = document.getElementById('dynamic-alerts-bar');
-            let pillsHTML = '';
-
-            if (isNewClient) {
-                pillsHTML += `<span class="inline-flex items-center gap-1.5 text-xs bg-amber-50 text-amber-900 border border-amber-200 px-2.5 py-1 rounded-lg font-medium"><i class="fa-solid fa-wallet text-amber-600"></i> <strong>Paso 2:</strong> Exige pago 100% anticipado al contado.</span>`;
-            }
-            if (isColdChain) {
-                pillsHTML += `<span class="inline-flex items-center gap-1.5 text-xs bg-sky-50 text-sky-900 border border-sky-200 px-2.5 py-1 rounded-lg font-medium"><i class="fa-solid fa-temperature-low text-sky-600"></i> <strong>Paso 3 y 4:</strong> Enviar con cadena de frío.</span>`;
-            }
-            if (isMicro) {
-                pillsHTML += `<span class="inline-flex items-center gap-1.5 text-xs bg-rose-50 text-rose-900 border border-rose-200 px-2.5 py-1 rounded-lg font-medium"><i class="fa-solid fa-bacterium text-rose-600"></i> <strong>Paso 5:</strong> Recepción microbiológica antes de las 13:00 hrs.</span>`;
-            }
-
-            if (!pillsHTML) {
-                pillsHTML = `<span class="text-xs text-slate-500 italic">Activa los filtros superiores para ver alertas personalizadas.</span>`;
-            }
-            alertsBar.innerHTML = pillsHTML;
-        }
-
-        function toggleComplete(stepId) {
-            const index = completedSteps.indexOf(stepId);
-            if (index > -1) completedSteps.splice(index, 1);
-            else completedSteps.push(stepId);
-            localStorage.setItem('inta_completed_steps', JSON.stringify(completedSteps));
-            updateProgressUI();
-            renderChecklistView();
-            if (!document.getElementById('step-drawer').classList.contains('translate-x-full') && currentStepId === stepId) {
-                updateDrawerCompleteButton();
-            }
-        }
-
-        function toggleCompleteCurrent() { toggleComplete(currentStepId); }
-
-        function resetProgress() {
-            completedSteps = [];
-            orderChecklistState = {};
-            localStorage.removeItem('inta_completed_steps');
-            localStorage.removeItem('inta_order_checklist');
-            updateProgressUI();
-            renderChecklistView();
-            showToast("Progreso reiniciado");
-        }
-
-        function updateProgressUI() {
-            const total = stepsData.length;
-            const count = completedSteps.length;
-            const pct = Math.round((count / total) * 100);
-            document.getElementById('progress-text').textContent = `${count} / ${total} pasos`;
-            document.getElementById('progress-bar').style.width = `${pct}%`;
-
-            stepsData.forEach(step => {
-                const btn = document.getElementById(`check-btn-${step.id}`);
-                if (!btn) return;
-                const isDone = completedSteps.includes(step.id);
-                if (isDone) {
-                    btn.className = "w-7 h-7 rounded-full bg-teal-500 border-2 border-teal-500 flex items-center justify-center text-white shadow-xs transition";
-                } else {
-                    btn.className = "w-7 h-7 rounded-full border-2 border-slate-300 flex items-center justify-center text-slate-300 hover:border-teal-500 hover:text-teal-500 transition";
-                }
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('header button[id^="btn-"]').forEach(btn => {
+                btn.classList.remove('border-white', 'text-white');
+                btn.classList.add('border-transparent', 'text-emerald-200');
             });
+            document.getElementById('tab-' + tabId).classList.add('active');
+            const activeBtn = document.getElementById('btn-' + tabId);
+            activeBtn.classList.remove('border-transparent', 'text-emerald-200');
+            activeBtn.classList.add('border-white', 'text-white');
         }
 
-        function selectStep(stepId) {
-            currentStepId = stepId;
-            const step = stepsData.find(s => s.id === stepId);
-            if (!step) return;
+        const stepDetails = {
+            1: { title: "Paso 1: Solicitud de Cotización", badge: "Fase 1", body: "Enviar correo a atecnica@inta.uchile.cl con la matriz y análisis requeridos." },
+            2: { title: "Paso 2: Recepción de Cotización", badge: "Fase 1", body: "Revisar cotización formal (ej. N° 19674, válida por 60 días)." },
+            3: { title: "Paso 3: Pago Anticipado", badge: "Fase 2", body: "Banco Santander Cta 7074945-9. Comprobante a cgolusda@inta.uchile.cl" },
+            4: { title: "Paso 4: Preparación de Muestras", badge: "Fase 2", body: "Mínimo 400g y 6 unidades del mismo lote (Norma N° 91)." },
+            5: { title: "Paso 5: Despacho y Orden", badge: "Fase 2", body: "Entregar en Av. El Líbano 5524, Macul. Adjuntar Orden de Servicio." },
+            6: { title: "Paso 6: Análisis de Laboratorio", badge: "Fase 3", body: "Ejecución de ensayos en 15 días hábiles." },
+            7: { title: "Paso 7: Informe y Marca", badge: "Fase 3", body: "Prohibido uso de logo INTA sin autorización previa (multa 550 UF)." },
+            8: { title: "Paso 8: Smart QR", badge: "Fase 3", body: "Digitaliza tu tabla nutricional para ferias y envases." }
+        };
 
-            document.getElementById('drawer-step-badge').textContent = `PASO ${step.id} DE 8`;
-            document.getElementById('drawer-phase-label').textContent = step.phase;
-            document.getElementById('drawer-title').textContent = step.title;
+        function showStepDetail(stepNum) {
+            const card = document.getElementById('stepDetailCard');
+            document.getElementById('detailStepBadge').innerText = stepDetails[stepNum].badge;
+            document.getElementById('detailTitle').innerText = stepDetails[stepNum].title;
+            document.getElementById('detailBody').innerText = stepDetails[stepNum].body;
+            card.classList.remove('hidden');
+        }
+        function closeStepDetail() { document.getElementById('stepDetailCard').classList.add('hidden'); }
 
-            let html = `<div class="bg-slate-50 rounded-2xl p-4 border border-slate-200 text-sm text-slate-700 leading-relaxed">${step.summary}</div>`;
-
-            if (step.highlights) {
-                html += `<div><h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2.5">Datos Clave</h4><div class="grid grid-cols-1 sm:grid-cols-2 gap-3">` +
-                    step.highlights.map(h => `<div class="bg-white rounded-xl p-3.5 border border-slate-200 flex items-center justify-between gap-2"><div><span class="block text-[11px] font-semibold text-slate-400 uppercase">${h.label}</span><span class="text-xs sm:text-sm font-bold text-slate-800">${h.value}</span></div>${h.copyable ? `<button onclick="copyText('${h.value}')" class="p-2 rounded-lg bg-slate-100 hover:bg-teal-50 text-slate-600 transition"><i class="fa-regular fa-copy"></i></button>` : ''}</div>`).join('') +
-                    `</div></div>`;
-            }
-
-            if (step.bankDetails) {
-                html += `<div><h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2.5">Datos Bancarios Oficiales</h4><div class="bg-white rounded-2xl border border-slate-200 divide-y divide-slate-100 overflow-hidden">` +
-                    step.bankDetails.map(b => `<div class="px-4 py-3 flex items-center justify-between gap-2"><span class="text-xs font-medium text-slate-500">${b.label}</span><div class="flex items-center gap-2"><span class="text-xs sm:text-sm font-bold text-slate-900">${b.value}</span><button onclick="copyText('${b.copy}')" class="text-slate-400 hover:text-teal-600 p-1"><i class="fa-regular fa-copy text-xs"></i></button></div></div>`).join('') +
-                    `</div></div>`;
-            }
-
-            if (step.analysesList) {
-                html += `<div><h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2.5">Análisis Incluidos</h4><div class="space-y-2.5">` +
-                    step.analysesList.map(a => `<div class="bg-white rounded-xl p-3.5 border border-slate-200 flex items-start gap-3"><div class="w-6 h-6 rounded-lg bg-teal-50 text-teal-700 flex items-center justify-center shrink-0 mt-0.5"><i class="fa-solid fa-check text-xs"></i></div><div><div class="text-sm font-bold text-slate-900">${a.name}</div><p class="text-xs text-slate-600 mt-0.5">${a.desc}</p></div></div>`).join('') +
-                    `</div></div>`;
-            }
-
-            if (step.sampleRules) {
-                html += `<div><h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2.5">Reglas de Muestra</h4><div class="grid grid-cols-1 sm:grid-cols-2 gap-3">` +
-                    step.sampleRules.map(r => `<div class="bg-white rounded-xl p-4 border border-slate-200"><span class="text-[11px] font-bold uppercase text-teal-700 block">${r.title}</span><div class="text-sm font-extrabold text-slate-900 mt-0.5">${r.value}</div><p class="text-xs text-slate-600 mt-1.5">${r.desc}</p></div>`).join('') +
-                    `</div></div>`;
-            }
-
-            if (step.interactiveChecklist) {
-                html += `<div class="bg-indigo-50/70 rounded-2xl p-4 border border-indigo-200"><h4 class="text-xs font-bold uppercase tracking-wider text-indigo-900 mb-3"><i class="fa-solid fa-list-check text-indigo-600 mr-1.5"></i>Checklist de Orden de Servicio</h4><div class="space-y-2">` +
-                    step.interactiveChecklist.map((item, idx) => `<label class="flex items-start gap-2.5 p-2.5 rounded-xl bg-white border border-indigo-100 cursor-pointer hover:border-indigo-300 transition"><input type="checkbox" ${orderChecklistState[idx] ? 'checked' : ''} onchange="orderChecklistState[${idx}]=!orderChecklistState[${idx}];localStorage.setItem('inta_order_checklist',JSON.stringify(orderChecklistState));" class="mt-0.5 rounded text-indigo-600"><span class="text-xs sm:text-sm text-slate-800 font-medium">${item}</span></label>`).join('') +
-                    `</div></div>`;
-            }
-
-            if (step.legalRules) {
-                html += `<div><h4 class="text-xs font-bold uppercase tracking-wider text-slate-400 mb-2.5">Normas Legales y Uso de Marca</h4><div class="space-y-2">` +
-                    step.legalRules.map(rule => `<div class="p-3.5 rounded-xl border flex items-start gap-3 ${rule.allowed ? 'bg-emerald-50/70 border-emerald-200' : 'bg-rose-50/70 border-rose-200'}"><div class="w-6 h-6 rounded-full flex items-center justify-center shrink-0 mt-0.5 ${rule.allowed ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'}"><i class="fa-solid ${rule.allowed ? 'fa-check' : 'fa-xmark'} text-xs"></i></div><p class="text-xs sm:text-sm font-medium ${rule.allowed ? 'text-emerald-950' : 'text-rose-950'}">${rule.text}</p></div>`).join('') +
-                    `</div></div>`;
-            }
-
-            if (step.tips) {
-                html += `<div class="bg-teal-50/60 rounded-2xl p-4 border border-teal-200"><h4 class="text-xs font-bold uppercase tracking-wider text-teal-800 mb-2"><i class="fa-solid fa-lightbulb text-amber-500 mr-1.5"></i>Consejos del Coach</h4><ul class="space-y-1.5">` +
-                    step.tips.map(t => `<li class="text-xs sm:text-sm text-teal-950 flex items-start gap-2"><span class="text-teal-600 font-bold">•</span><span>${t}</span></li>`).join('') +
-                    `</ul></div>`;
-            }
-
-            document.getElementById('drawer-body').innerHTML = html;
-            document.getElementById('drawer-prev-btn').disabled = (stepId === 1);
-            document.getElementById('drawer-next-btn').disabled = (stepId === stepsData.length);
-            updateDrawerCompleteButton();
-
-            const backdrop = document.getElementById('step-drawer-backdrop');
-            const drawer = document.getElementById('step-drawer');
-            backdrop.classList.remove('hidden');
-            requestAnimationFrame(() => {
-                backdrop.classList.remove('opacity-0');
-                drawer.classList.remove('translate-x-full');
-            });
+        function updateProgress() {
+            const cbs = document.querySelectorAll('#checklistContainer input');
+            let count = Array.from(cbs).filter(cb => cb.checked).length;
+            let pct = Math.round((count / cbs.length) * 100);
+            document.getElementById('progressBar').style.width = pct + '%';
+            document.getElementById('progressText').innerText = `${count} / ${cbs.length} completados (${pct}%)`;
         }
 
-        function updateDrawerCompleteButton() {
-            const isDone = completedSteps.includes(currentStepId);
-            const btn = document.getElementById('drawer-complete-btn');
-            const txt = document.getElementById('drawer-complete-text');
-            if (isDone) {
-                btn.className = "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-100 hover:bg-emerald-200 text-emerald-900 border border-emerald-300 text-xs sm:text-sm font-bold transition";
-                txt.textContent = "Paso completado ✓";
-            } else {
-                btn.className = "inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-teal-600 hover:bg-teal-700 text-white text-xs sm:text-sm font-semibold shadow-sm transition";
-                txt.textContent = "Marcar paso listo";
-            }
-        }
-
-        function navigateStep(delta) {
-            const nextId = currentStepId + delta;
-            if (nextId >= 1 && nextId <= stepsData.length) selectStep(nextId);
-        }
-
-        function closeDrawer() {
-            const backdrop = document.getElementById('step-drawer-backdrop');
-            const drawer = document.getElementById('step-drawer');
-            backdrop.classList.add('opacity-0');
-            drawer.classList.add('translate-x-full');
-            setTimeout(() => backdrop.classList.add('hidden'), 300);
-        }
-
-        function renderChecklistView() {
-            const container = document.getElementById('checklist-container');
-            if (!container) return;
-            container.innerHTML = stepsData.map(step => {
-                const isDone = completedSteps.includes(step.id);
-                return `<div class="bg-white rounded-2xl p-4 sm:p-5 border ${isDone ? 'border-teal-400 bg-teal-50/15' : 'border-slate-200'} shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-4 transition">
-                    <div class="flex items-start gap-3.5">
-                        <button onclick="toggleComplete(${step.id})" class="mt-0.5 w-7 h-7 rounded-full border-2 flex items-center justify-center shrink-0 transition ${isDone ? 'bg-teal-500 border-teal-500 text-white' : 'border-slate-300 text-transparent hover:border-teal-500'}">
-                            <i class="fa-solid fa-check text-xs"></i>
-                        </button>
-                        <div>
-                            <span class="text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-md bg-slate-100 text-slate-700">Paso ${step.id}</span>
-                            <h3 class="text-base font-bold ${isDone ? 'text-slate-500 line-through' : 'text-slate-900'} mt-1">${step.title}</h3>
-                            <p class="text-xs sm:text-sm text-slate-600 mt-0.5">${step.shortDesc}</p>
-                        </div>
-                    </div>
-                    <button onclick="selectStep(${step.id})" class="self-end sm:self-center px-4 py-2 rounded-xl bg-slate-900 hover:bg-teal-700 text-white text-xs font-semibold transition">
-                        Ver ficha <i class="fa-solid fa-chevron-right text-[10px] ml-1"></i>
-                    </button>
-                </div>`;
-            }).join('');
-        }
-
-        function openCalculatorModal() {
-            document.getElementById('calc-modal-backdrop').classList.remove('hidden');
-            calculateSample();
-        }
-        function closeCalculatorModal() {
-            document.getElementById('calc-modal-backdrop').classList.add('hidden');
-        }
         function calculateSample() {
-            const unitWeight = parseFloat(document.getElementById('calc-unit-weight').value) || 0;
-            const unitCount = parseInt(document.getElementById('calc-unit-count').value) || 0;
-            const total = unitWeight * unitCount;
-            const box = document.getElementById('calc-result-box');
-            if (total >= 400 && unitCount >= 6) {
-                box.className = "rounded-xl p-4 border bg-emerald-50 border-emerald-300 space-y-1 text-emerald-900 text-xs";
-                box.innerHTML = `<strong>¡Muestra Óptima! Total: ${total} g.</strong> Cumples con el mínimo de 400 g y las 6 unidades de la Norma N° 91.`;
-            } else {
-                box.className = "rounded-xl p-4 border bg-amber-50 border-amber-300 space-y-1 text-amber-900 text-xs";
-                box.innerHTML = `<strong>Precaución:</strong> Tu muestra suma ${total} g y ${unitCount} unidades. Se sugieren al menos 400 g y 6 unidades del mismo lote.`;
-            }
+            let u = parseInt(document.getElementById('calcUnits').value) || 0;
+            let w = parseInt(document.getElementById('calcWeight').value) || 0;
+            let total = u * w;
+            let box = document.getElementById('calcResult');
+            box.classList.remove('hidden');
+            box.className = `mt-6 p-4 rounded-xl border ${total >= 400 ? 'bg-emerald-50 border-emerald-200 text-emerald-900' : 'bg-amber-50 border-amber-200 text-amber-900'}`;
+            box.innerHTML = `<strong>Peso total: ${total}g</strong>. ${total >= 400 ? '✅ Cumple con el mínimo de 400g del INTA.' : '❌ No alcanza el mínimo de 400g.'}`;
         }
 
-        // SMART QR GENERATOR LOGIC (ROBUST API INTEGRATION)
         function loadSampleData() {
-            document.getElementById('qr-name').value = "Ajo Negro Orgánico Gourmet";
-            document.getElementById('qr-serving').value = "30g (3 dientes)";
-            document.getElementById('qr-kcal').value = "75";
-            document.getElementById('qr-prot').value = "3.2g";
-            document.getElementById('qr-fat').value = "0.4g";
-            document.getElementById('qr-carb').value = "14.5g";
-            document.getElementById('qr-sugar').value = "8.1g";
-            document.getElementById('qr-sodium').value = "4mg";
-            document.getElementById('qr-ingredients').value = "Ajo chilote fermentado naturalmente.";
-            document.getElementById('qr-cert').value = "Cotización N° 19674 - INTA Univ. de Chile";
+            document.getElementById('qrProductName').value = "Ajo Negro Orgánico";
+            document.getElementById('qrServing').value = "30g";
+            document.getElementById('qrKcal').value = "75";
+            document.getElementById('qrProt').value = "3.5g";
+            document.getElementById('qrFat').value = "0.5g";
+            document.getElementById('qrCarb').value = "15g";
             generateSmartQR();
         }
 
         function generateSmartQR() {
-            const name = document.getElementById('qr-name').value || "Alimento Artesanal";
-            const serving = document.getElementById('qr-serving').value || "100g";
-            const kcal = document.getElementById('qr-kcal').value || "0";
-            const prot = document.getElementById('qr-prot').value || "0g";
-            const fat = document.getElementById('qr-fat').value || "0g";
-            const carb = document.getElementById('qr-carb').value || "0g";
-            const sugar = document.getElementById('qr-sugar').value || "0g";
-            const sodium = document.getElementById('qr-sodium').value || "0g";
-            const ingredients = document.getElementById('qr-ingredients').value || "-";
-            const cert = document.getElementById('qr-cert').value || "INTA";
-
-            document.getElementById('preview-name').textContent = name;
-            document.getElementById('preview-serving').textContent = serving;
-            document.getElementById('preview-kcal').textContent = kcal;
-            document.getElementById('preview-prot').textContent = prot;
-            document.getElementById('preview-fat').textContent = fat;
-            document.getElementById('preview-carb').textContent = carb;
-            document.getElementById('preview-sugar').textContent = sugar;
-            document.getElementById('preview-sodium').textContent = sodium;
-            document.getElementById('preview-cert').textContent = cert;
-
-            const payload = JSON.stringify({ producto: name, porcion: serving, kcal, proteinas: prot, grasas: fat, carbohidratos: carb, azucares: sugar, sodio, ingredientes, ref: cert });
-            const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=180x180&data=` + encodeURIComponent(payload);
-
-            document.getElementById('qrcode-render').innerHTML = `<img src="${qrUrl}" alt="Smart QR" class="mx-auto rounded-lg shadow-2xs" width="180" height="180">`;
-            document.getElementById('qr-placeholder').classList.add('hidden');
-            document.getElementById('qr-result-box').classList.remove('hidden');
-        }
-
-        function copyText(text) {
-            const temp = document.createElement('textarea');
-            temp.value = text;
-            document.body.appendChild(temp);
-            temp.select();
-            document.execCommand('copy');
-            document.body.removeChild(temp);
-            showToast(`Copiado: ${text}`);
-        }
-
-        function showToast(msg) {
-            const toast = document.getElementById('toast-notification');
-            document.getElementById('toast-message').textContent = msg;
-            toast.classList.remove('opacity-0');
-            setTimeout(() => toast.classList.add('opacity-0'), 2500);
+            let name = document.getElementById('qrProductName').value;
+            let serving = document.getElementById('qrServing').value;
+            let kcal = document.getElementById('qrKcal').value;
+            let dataStr = `PRODUCTO: ${name} | PORCION: ${serving} | KCAL: ${kcal}`;
+            
+            // Render direct reliable visual QR image via API
+            let qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=160x160&data=` + encodeURIComponent(dataStr);
+            document.getElementById('qrcode').innerHTML = `<img src="${qrUrl}" alt="QR" width="160" height="160" class="mx-auto">`;
+            document.getElementById('qrPlaceholder').classList.add('hidden');
+            document.getElementById('qrResultContainer').classList.remove('hidden');
         }
     </script>
 </body>
